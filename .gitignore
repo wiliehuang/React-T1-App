@@ -25,3 +25,7 @@ node_modules
 
 # node-waf configuration
 .lock-wscript
+
+# ignore dev build
+/src/public/bundle.js
+/src/public/bundle.js.map
