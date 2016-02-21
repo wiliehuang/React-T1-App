@@ -9,4 +9,4 @@ import Main from "./components/Main.jsx";
 //   }
 // }
 
-ReactDOM.render(<Main />, document.getElementById('react'));
+ReactDOM.render(<Main  />, document.getElementById('react'));
