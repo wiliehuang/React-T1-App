@@ -8,7 +8,10 @@ module.exports = {
     loaders: [
       { test: /\.jsx?$/,
         include: /app/, loader: 'babel-loader',
-        query: { presets: ['react', 'es2015', 'stage-0'] }
+        query: {
+          presets: ['react', 'es2015', 'stage-0'],
+          plugins: ['./app/plugins/babelRelayPlugin']
+       }
       }
 
     ]

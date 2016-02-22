@@ -1,6 +1,7 @@
 import React from "react";
-import API from "../API.jsx";
-import LinkStore from "../stores/LinkStore";
+import Relay from "react-relay";
+// import API from "../API.jsx";
+// import LinkStore from "../stores/LinkStore";
 
 let _getAppState = ()=> {
   return { links: LinkStore.getAll() };
@@ -16,7 +17,7 @@ class Main extends React.Component {
     limit: 4
   }
 
-  state = _getAppState();
+  //state = _getAppState();
 
   // constructor(props){
   //   super(props);
@@ -25,24 +26,24 @@ class Main extends React.Component {
   // }
   // not needed if stage-0 is used
 
-  componentDidMount() {
-    API.fetchLinks();
-    LinkStore.on("change", this.onChange);
-  }
-  componentWillUnmount() {
-    LinkStore.removeListener("change", this.onChange);
-  }
+  // componentDidMount() {
+  //   API.fetchLinks();
+  //   LinkStore.on("change", this.onChange);
+  // }
+  // componentWillUnmount() {
+  //   LinkStore.removeListener("change", this.onChange);
+  // }
   // onChange() {
   //   console.log("view change from store")
   //   this.setState(_getAppState());
   // }
   //replaced with below for stage-0 JS
-  onChange = () => {
-    this.setState(_getAppState());
-  }
+  // onChange = () => {
+  //   this.setState(_getAppState());
+  // }
 
   render() {
-    let content = this.state.links.splice(0, this.props.limit).map(link => {
+    let content = this.props.store.links.splice(0, this.props.limit).map(link => {
       return <li key={link._id}>
                 <a href={link.url}>{link.title}</a>
                 </li>;
@@ -58,5 +59,19 @@ class Main extends React.Component {
     );
   }
 }
+
+Main = Relay.createContainer(Main, {
+  fragments: {
+    store: () => Relay.QL`
+      fragment on Store {
+        links {
+          _id,
+          title,
+          url,
+        }
+      }
+    `
+  }
+});
 
 export default Main;
