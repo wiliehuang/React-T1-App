@@ -1,25 +1,37 @@
 import express from 'express';
-import schema from '../../app/data/schema';
+import Schema from '../../app/data/schema';
 import GraphQLHTTP from 'express-graphql';
 import {MongoClient} from 'mongodb';
+import fs from 'fs';
+import {graphql} from 'graphql';
+import {introspectionQuery} from 'graphql/utilities';
 
 let app = express();
 
 app.use(express.static(__dirname + '/../../public'));
 
+// let db;
 
 (async ()=> {
-  db = await MongoClient.connect(process.env.MONGO_URL);
+  let db = await MongoClient.connect(process.env.MONGO_URL);
+  let schema = Schema(db);
 
   app.use('/graphql', GraphQLHTTP({
-    schema: schema(db),
-    //schema,
+    schema,
     graphiql: true
   }));
   app.listen(3000, () => console.log("listening on port 3000"));
+
+  let json = await graphql(schema, introspectionQuery);
+  fs.writeFile('./app/data/schema.json', JSON.stringify(json, null, 2), err => {
+    if (err) throw err;
+
+    console.log("created JSON schema");
+  })
+
 })();
 
- let db;
+
 // MongoClient.connect(process.env.MONGO_URL, (err, database) => {
 //   if (err) {
 //     throw err;
@@ -36,11 +48,11 @@ app.use(express.static(__dirname + '/../../public'));
 //   app.listen(3000, () => console.log("listening on port 3000"));
 // });
 
-app.get("/data/links", (req, res) => {
-  db.collection("links").find({}).toArray((err, links) => {
-    if (err) {
-      throw err;
-    }
-    res.json(links);
-  });
-})
+// app.get("/data/links", (req, res) => {
+//   db.collection("links").find({}).toArray((err, links) => {
+//     if (err) {
+//       throw err;
+//     }
+//     res.json(links);
+//   });
+// })

@@ -24,6 +24,18 @@ let data = [
 //let counter = 42;
 let Schema = (db) => {
 
+  let store = {};
+
+  let storeType = new GraphQLObjectType({
+      name: 'Store',
+      fields: () => ({
+        links: {
+          type: new GraphQLList(linkType),
+          resolve: () => db.collection("links").find({}).toArray()
+        }
+      })
+    });
+
 let linkType = new GraphQLObjectType({
   name: 'Link',
   fields: () => ({
@@ -41,14 +53,11 @@ let schema = new GraphQLSchema({
       //   type: GraphQLInt,
       //   resolve: () => counter
       // },
-      links: {
-        type: new GraphQLList(linkType),
-        resolve: () => db.collection("links").find({}).toArray()
-      },
-      message: {
-        type: GraphQLString,
-        resolve: () => "Hello Test QL"
+      store: {
+        type: storeType,
+        resolve: () => store
       }
+
     })
   })//,
   // mutation: new GraphQLObjectType({
