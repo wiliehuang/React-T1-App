@@ -13,6 +13,7 @@ app.use(express.static(__dirname + '/../../public'));
 // let db;
 
 (async ()=> {
+  try{
   let db = await MongoClient.connect(process.env.MONGO_URL);
   let schema = Schema(db);
 
@@ -28,7 +29,9 @@ app.use(express.static(__dirname + '/../../public'));
 
     console.log("created JSON schema");
   })
-
+} catch(e) {
+  console.log(e);
+}
 })();
 
 
