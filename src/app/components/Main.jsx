@@ -2,6 +2,7 @@ import React from "react";
 import Relay from "react-relay";
 // import API from "../API.jsx";
 // import LinkStore from "../stores/LinkStore";
+import Link from "./Link.jsx";
 
 let _getAppState = ()=> {
   return { links: LinkStore.getAll() };
@@ -9,13 +10,14 @@ let _getAppState = ()=> {
 
 class Main extends React.Component {
 
-  static propTypes = {
-    limit: React.PropTypes.number
-  }
-
-  static defaultProps = {
-    limit: 4
-  }
+  // initial prop limit
+  // static propTypes = {
+  //   limit: React.PropTypes.number
+  // }
+  //
+  // static defaultProps = {
+  //   limit: 4
+  // }
 
   //state = _getAppState();
 
@@ -43,10 +45,8 @@ class Main extends React.Component {
   // }
 
   render() {
-    let content = this.props.store.links.splice(0, this.props.limit).map(link => {
-      return <li key={link._id}>
-                <a href={link.url}>{link.title}</a>
-                </li>;
+    let content = this.props.store.linkConnection.edges.map(edge => {
+      return <Link key={edge.node.id} link={edge.node} />;
     });
 
     return (
@@ -64,10 +64,13 @@ Main = Relay.createContainer(Main, {
   fragments: {
     store: () => Relay.QL`
       fragment on Store {
-        links {
-          _id,
-          title,
-          url,
+        linkConnection(first: 2) {
+          edges {
+            node {
+              id,
+              ${Link.getFragment('link')}
+            }
+          }
         }
       }
     `
