@@ -3,10 +3,11 @@ import Relay from "react-relay";
 // import API from "../API.jsx";
 // import LinkStore from "../stores/LinkStore";
 import Link from "./Link.jsx";
+import CreateLinkMutation from "../mutations/CreateLinkMutation";
 
-let _getAppState = ()=> {
-  return { links: LinkStore.getAll() };
-};
+// let _getAppState = ()=> {
+//   return { links: LinkStore.getAll() };
+// };
 
 class Main extends React.Component {
 
@@ -44,6 +45,23 @@ class Main extends React.Component {
   //   this.setState(_getAppState());
   // }
 
+  setLimit = (e) => {
+    let newLimit = Number(e.target.value);
+    this.props.relay.setVariables({limit: newLimit});
+  }
+  handleSubmit = (e) => {
+    e.preventDefault();
+    Relay.Store.update(
+      new CreateLinkMutation({
+        title: this.refs.newTitle.value,
+        url: this.refs.newUrl.value,
+        store: this.props.store
+      })
+    );
+    this.refs.newTitle.value = "";
+    this.refs.newUrl.value = "";
+  }
+
   render() {
     let content = this.props.store.linkConnection.edges.map(edge => {
       return <Link key={edge.node.id} link={edge.node} />;
@@ -52,6 +70,17 @@ class Main extends React.Component {
     return (
       <div>
         <h3>Links</h3>
+        <form onSubmit={this.handleSubmit}>
+          <input type="text" placeholder="Title" ref="newTitle" />
+          <input type="text" placeholder="Url" ref="newUrl" />
+          <button type="submit">Add</button>
+        </form>
+        Showing: &nbsp;
+        <select onChange={this.setLimit}
+                defaultValue={this.props.relay.variables.limit}>
+          <option value="10">10</option>
+          <option value="3">3</option>
+        </select>
         <ul>
           {content}
         </ul>
@@ -61,10 +90,14 @@ class Main extends React.Component {
 }
 
 Main = Relay.createContainer(Main, {
+initialVariables: {
+  limit: 300
+},
   fragments: {
     store: () => Relay.QL`
       fragment on Store {
-        linkConnection(first: 2) {
+        id,
+        linkConnection(first: $limit) {
           edges {
             node {
               id,
