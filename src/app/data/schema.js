@@ -9,6 +9,8 @@ import { GraphQLSchema,
 
 import {
   globalIdField,
+  fromGlobalId,
+  nodeDefinitions,
   connectionDefinitions,
   connectionArgs,
   connectionFromPromisedArray,
@@ -28,16 +30,32 @@ import {
 //    }
 //   }
 // };
-let data = [
-    {counter: 10},
-    {counter: 20},
-    {counter: 30}
-  ];
+// let data = [
+//     {counter: 10},
+//     {counter: 20},
+//     {counter: 30}
+//   ];
 
 //let counter = 42;
 let Schema = (db) => {
+  class Store {}
+  let store = new Store();
 
-  let store = {};
+  let nodeDefs = nodeDefinitions(
+    (globalId) => {
+      let {type} = fromGlobalId(globalId);
+      if (type === 'Store') {
+        return store;
+      }
+      return null;
+    },
+    (obj) => {
+      if (obj instanceof Store) {
+        return storeType;
+      }
+      return null;
+    }
+  );
 
   let storeType = new GraphQLObjectType({
       name: 'Store',
@@ -45,15 +63,27 @@ let Schema = (db) => {
         id: globalIdField("Store"),
         linkConnection: {
           type: linkConnection.connectionType,
-          args: connectionArgs,
-          resolve: (_, args) => connectionFromPromisedArray(
-          db.collection("links").find({})
+          args: {
+            ...connectionArgs,
+            query: { type: GraphQLString }
+          },
+          resolve: (_, args) => {
+            let findParams = {};
+            if (args.query) {
+              findParams.title = new RegExp(args.query, 'i');
+            }
+
+          return connectionFromPromisedArray(
+          db.collection("links")
+            .find(findParams)
             .sort({createdAt: -1})
             .limit(args.first).toArray(),
           args
-        )
+        );
         }
-      })
+        }
+      }),
+      interfaces: [nodeDefs.nodeInterface]
     });
 
 let linkType = new GraphQLObjectType({
@@ -104,7 +134,6 @@ let createLinkMutation = mutationWithClientMutationId({
       createdAt: Date.now()
     });
   }
-
 });
 
 let schema = new GraphQLSchema({
@@ -115,11 +144,11 @@ let schema = new GraphQLSchema({
       //   type: GraphQLInt,
       //   resolve: () => counter
       // },
+      node: nodeDefs.nodeField,
       store: {
         type: storeType,
         resolve: () => store
       }
-
     })
   }),
   mutation: new GraphQLObjectType({
